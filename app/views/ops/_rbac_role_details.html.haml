@@ -9,6 +9,7 @@
   = react('RbacRoleForm', 
     :selectOptions => select_options,
     :url           => url,
-    :customProps   => custom_props)
+    :customProps   => custom_props,
+    :roleId        => @role.id)
 - else
   = role_rbac_details(@role, @rbac_menu_tree)
