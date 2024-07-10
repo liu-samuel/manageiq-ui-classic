@@ -2406,6 +2406,7 @@ Rails.application.routes.draw do
         fetch_production_log
         log_collection_form_fields
         pglogical_subscriptions_form_fields
+        rbac_role_edit_get
         schedule_form_fields
       ],
       :post => %w[
@@ -2456,8 +2457,9 @@ Rails.application.routes.draw do
         rbac_group_seq_edit
         rbac_group_user_lookup
         rbac_groups_list
+        rbac_role_add_react
         rbac_role_edit
-        rbac_role_field_changed
+        rbac_role_field_changed        
         rbac_roles_list
         rbac_tags_edit
         rbac_tenant_edit

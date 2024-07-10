@@ -1,11 +1,12 @@
 import { componentTypes, validatorTypes } from '@@ddf';
 
-const createSchema = (selectOptions, customProps) => ({
+const createSchema = (selectOptions, customProps, initialValues) => ({
   fields: [
     {
       component: componentTypes.TEXT_FIELD,
       id: 'name',
       name: 'name',
+      initialValue: initialValues.name || '',
       label: __('Name'),
       maxLength: 128,
       validate: [{ type: validatorTypes.REQUIRED }],
@@ -15,6 +16,7 @@ const createSchema = (selectOptions, customProps) => ({
       component: componentTypes.SELECT,
       id: 'access_restriction_orchestration',
       name: 'access_restriction_orchestration',
+      initialValue: initialValues.vms || '',
       label: __('Access Restriction for Orchestration Stacks, Key Pairs, Services, VMs, and Templates'),
       maxLength: 128,
       options: selectOptions.map((option) => ({ label: option[1], value: option[0] })),
@@ -23,6 +25,7 @@ const createSchema = (selectOptions, customProps) => ({
       component: componentTypes.SELECT,
       id: 'access_restriction_catalog',
       name: 'access_restriction_catalog',
+      initialValue: initialValues.service_templates || '',
       label: __('Access Restriction for Catalog Items'),
       maxLength: 128,
       options: selectOptions.map((option) => ({ label: option[1], value: option[0] })),

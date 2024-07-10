@@ -97,6 +97,15 @@ module OpsController::OpsRbac
     rbac_edit_reset('new', 'role', MiqUserRole)
   end
 
+  def rbac_role_add_react
+    assert_privileges("rbac_role_add")
+    if params[:id] != 'new'
+      rbac_edit_reset_react('edit', 'role', MiqUserRole)
+    else
+      rbac_edit_reset_react('new', 'role', MiqUserRole)
+    end
+  end
+
   def rbac_role_copy
     assert_privileges("rbac_role_copy")
     rbac_edit_reset('copy', 'role', MiqUserRole)
@@ -109,6 +118,25 @@ module OpsController::OpsRbac
     when 'save', 'add' then rbac_edit_save_or_add('role', 'miq_user_role')
     when 'reset', nil  then rbac_edit_reset(params[:typ], 'role', MiqUserRole) # Reset or form load
     end
+  end
+
+  def rbac_role_edit_get
+    assert_privileges("rbac_role_edit")
+    unless params[:id]
+      obj = find_checked_items
+      @_params[:id] = obj[0]
+    end
+    @hide_bottom_bar = true
+    require 'byebug'
+    byebug
+
+    role = MiqUserRole.find_by(id: params[:id])
+    render :json => {
+      :name                         => role.name,
+      :vms                          => role[:settings][:restrictions][:vms],
+      :service_templates            => role[:settings][:restrictions][:service_templates],
+      :features                     => role.miq_product_features
+    }
   end
 
   def rbac_tenant_add
@@ -197,8 +225,6 @@ module OpsController::OpsRbac
   end
 
   def rbac_role_field_changed
-    require 'byebug'
-    byebug
     assert_privileges(params[:id] == "new" ? "rbac_role_add" : "rbac_role_edit")
 
     rbac_field_changed("role")
@@ -652,12 +678,45 @@ module OpsController::OpsRbac
     replace_right_cell(:nodetype => x_node)
   end
 
-  def rbac_edit_save_or_add(what, rbac_suffix = what)
+  def rbac_edit_reset_react(operation, what, klass)
+    key = what.to_sym
+    if operation != "new"
+      record = MiqUserRole.find_by(id: params[:id])
+      record.miq_product_features = [MiqProductFeature.find_by(:identifier => MiqProductFeature.feature_root)]
+    end
+
+    case operation
+    when "new"
+      # create new record
+      @record = klass.new
+      if key == :role
+        @record.miq_product_features = [MiqProductFeature.find_by(:identifier => MiqProductFeature.feature_root)]
+      end
+    when "copy"
+      # copy existing record
+      @record = record.clone
+      @record.miq_product_features = record.miq_product_features
+      @record.read_only = false
+    else
+      # use existing record
+      @record = record
+    end
+    @sb[:typ] = operation
+
+    rbac_role_set_form_vars
+    rbac_role_get_form_vars
+
+    rbac_edit_save_or_add('role', 'miq_user_role')
+    
+  end
+
+  def rbac_edit_save_or_add(what, rbac_suffix = what)    
     key         = what.to_sym
     id          = params[:id] || "new"
     add_pressed = params[:button] == "add"
 
-    return unless load_edit("rbac_#{what}_edit__#{id}", "replace_cell__explorer")
+
+    # return unless load_edit("rbac_#{what}_edit__#{id}", "replace_cell__explorer")
 
     case key
     when :user
@@ -741,8 +800,6 @@ module OpsController::OpsRbac
 
   # AJAX driven routine to check for changes in ANY field on the form
   def rbac_field_changed(rec_type)
-    require 'byebug'
-    byebug
     id = params[:id].split('__').first || 'new' # Get the record id
     id = id unless %w[new seq].include?(id)
     return unless load_edit("rbac_#{rec_type}_edit__#{id}", "replace_cell__explorer")
@@ -1273,6 +1330,8 @@ module OpsController::OpsRbac
     @edit[:new][:vm_restriction] = vmr || :none
     str = @record.settings.fetch_path(:restrictions, :service_templates) if @record.settings
     @edit[:new][:service_template_restriction] = str || :none
+    require 'byebug'
+    byebug
     @edit[:new][:features] = rbac_expand_features(@record.miq_product_features.map(&:identifier)).sort
 
     @edit[:current] = copy_hash(@edit[:new])
@@ -1336,11 +1395,12 @@ module OpsController::OpsRbac
   end
 
   def rbac_role_get_form_vars
+    require 'byebug'
+    byebug
     @edit[:new][:name] = params[:name] if params[:name]
     @edit[:new][:vm_restriction] = params[:vm_restriction].to_sym if params[:vm_restriction]
     @edit[:new][:service_template_restriction] = params[:service_template_restriction].to_sym if params[:service_template_restriction]
 
-    # Add/removed features based on the node that was checked
     if params[:check]
       node = params[:id].split("__").last # Get the feature of the checked node
       if params[:check] == "0" # Unchecked

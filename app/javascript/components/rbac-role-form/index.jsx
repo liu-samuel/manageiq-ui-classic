@@ -5,31 +5,43 @@ import { Loading } from 'carbon-components-react';
 import createSchema from './rbac-role-form.schema';
 import miqRedirectBack from '../../helpers/miq-redirect-back';
 
-const RbacRoleForm = ({ selectOptions, url, customProps, role }) => {
-  console.log(url);
+const RbacRoleForm = ({
+  selectOptions, url, getURL, customProps, role,
+}) => {
   const [formData, setFormData] = useState({
     isLoading: false,
+    params: {},
+    initialValues: {},
   });
+
+  const isEdit = !!(role && role.id);
 
   useEffect(() => {
     if (formData.isLoading) {
-      http.post(url, formData.tempData, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-        .then((result) => {
-          setFormData({
-            ...formData,
-            isLoading: false,
-            simulationTree: result,
-          });
+      http.post(url, formData.params)
+        .then(() => {
+          const confirmation = isEdit ? __('Role Edited') : __('Role Created');
+          miqRedirectBack(sprintf(confirmation), 'success', '/ops/explorer');
         })
         .catch((error) => console.log('error: ', error));
+    } else if (isEdit) {
+      http.get(`${getURL}/${role.id}`).then((roleValues) => {
+        if (roleValues) {
+          setFormData({ ...formData, isLoading: false, initialValues: roleValues });
+        }
+      });
+    } else {
+      const initialValues = {
+        name: role.name !== null ? `Copy of ${role.name}` : '',
+        vms: role && role.settings && role.settings.restrictions && role.settings.restrictions.vms,
+        service_templates: role && role.settings && role.settings.restrictions && role.settings.restrictions.service_templates,
+        // check: role.miq_product_features,
+      };
+      setFormData({ ...formData, isLoading: false, initialValues });
     }
-  }, [formData.isLoading]);
-
-  const isEdit = !!(role && role.id);
+  }, [formData.isLoading, role]);
+  console.log('role: ', role);
+  console.log('initialvalues: ', formData.initialValues);
 
   const onSubmit = (values) => {
     console.log(values);
@@ -37,21 +49,16 @@ const RbacRoleForm = ({ selectOptions, url, customProps, role }) => {
 
     const params = {
       name: values.name,
-      access_restriction_orchestration: values.access_restriction_orchestration,
-      access_restriction_catalog: values.access_restriction_catalog,
-      check: '1',
+      vm_restriction: values.access_restriction_orchestration,
+      service_template_restriction: values.access_restriction_catalog,
+      // check: '0',
     };
 
-    const request = isEdit
-      ? http.post(`${url}/${role.id}`, params)
-      : http.post(url, params);
-
-    request
-      .then(() => {
-        const confirmation = isEdit ? __('Role Edited') : __('Role Created');
-        miqRedirectBack(sprintf(confirmation, values.name), 'success', '/ops/explorer');
-      })
-      .catch(miqSparkleOff);
+    setFormData({
+      ...formData,
+      isLoading: true,
+      params,
+    });
   };
 
   return (
@@ -63,7 +70,7 @@ const RbacRoleForm = ({ selectOptions, url, customProps, role }) => {
       ) : (
         <div className="dialog-provision-form">
           <MiqFormRenderer
-            schema={createSchema(selectOptions, customProps)}
+            schema={createSchema(selectOptions, customProps, formData.initialValues)}
             onSubmit={onSubmit}
             canCancel
             canReset
@@ -78,15 +85,23 @@ const RbacRoleForm = ({ selectOptions, url, customProps, role }) => {
 RbacRoleForm.propTypes = {
   selectOptions: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.string.isRequired)).isRequired,
   url: PropTypes.string,
+  getURL: PropTypes.string,
   customProps: PropTypes.oneOfType([PropTypes.string, PropTypes.object, PropTypes.array]).isRequired,
   role: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
+    settings: PropTypes.shape({
+      restrictions: PropTypes.shape({
+        service_templates: PropTypes.string.isRequired,
+        vms: PropTypes.string.isRequired,
+      }),
+    }),
   }),
 };
 
 RbacRoleForm.defaultProps = {
   url: '',
+  getURL: '',
   role: undefined,
 };
 

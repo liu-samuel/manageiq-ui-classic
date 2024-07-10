@@ -4,12 +4,14 @@
 - role_restrictions = role_restrictions.sort
 - select_options =  [["<#{_('None')}>", ""]] + role_restrictions
 - if @edit
-  - url = url_for_only_path(:action => 'rbac_role_field_changed', :id => (@edit[:role_id] || "new"))
+  - get_url = url_for_only_path(:action => 'rbac_role_edit_get')
+  - url = url_for_only_path(:action => 'rbac_role_add_react', :id => (@edit[:role_id] || "new"))
   - custom_props = rbac_role_product_features(@role, @rbac_menu_tree)
   = react('RbacRoleForm', 
     :selectOptions => select_options,
     :url           => url,
+    :getURL        => get_url,
     :customProps   => custom_props,
-    :roleId        => @role.id)
+    :role          => @role)
 - else
   = role_rbac_details(@role, @rbac_menu_tree)
