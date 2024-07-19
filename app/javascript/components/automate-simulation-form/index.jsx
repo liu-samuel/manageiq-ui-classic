@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import MiqFormRenderer from '@@ddf';
+import MiqFormRenderer, { useFormApi } from '@@ddf';
+import { FormSpy } from '@data-driven-forms/react-form-renderer';
 import PropTypes from 'prop-types';
-import { Loading } from 'carbon-components-react';
+import { Loading, Button } from 'carbon-components-react';
 import createSchema from './automate-simulation-form.schema';
 import AutomationSimulation from '../AutomationSimulation';
 
@@ -46,7 +47,7 @@ const AutomateSimulationForm = ({
       object_request: values.object_request,
       target_class: values.target_class,
       readonly: values.readonly,
-      selection_target: values.selection_target,
+      target_id: values.selection_target,
       button: 'throw',
     };
 
@@ -84,6 +85,7 @@ const AutomateSimulationForm = ({
           onSubmit={handleSubmit}
           canReset
           onReset={onFormReset}
+          FormTemplate={(props) => <FormTemplate {...props} />}
         />
       </div>
       <div className="automate-simulation-summary-wrapper">
@@ -104,6 +106,39 @@ const AutomateSimulationForm = ({
   );
 };
 
+const FormTemplate = ({
+  formFields,
+}) => {
+  const {
+    handleSubmit, onReset, getState,
+  } = useFormApi();
+  const { valid } = getState();
+  const submitLabel = __('Save');
+  return (
+    <form onSubmit={handleSubmit}>
+      {formFields}
+      <FormSpy>
+        {() => (
+          <div className="custom-button-wrapper">
+            <Button
+              disabled={!valid}
+              kind="primary"
+              className="btnRight"
+              type="submit"
+              variant="contained"
+            >
+              {submitLabel}
+            </Button>
+            <Button variant="contained" type="button" onClick={onReset} kind="secondary">
+              { __('Reset')}
+            </Button>
+          </div>
+        )}
+      </FormSpy>
+    </form>
+  );
+};
+
 AutomateSimulationForm.propTypes = {
   resolve: PropTypes.object.isRequired,
   maxNameLength: PropTypes.number.isRequired,
@@ -113,6 +148,10 @@ AutomateSimulationForm.propTypes = {
   aeCustomButton: PropTypes.bool.isRequired,
   attrValuesPairs: PropTypes.arrayOf(PropTypes.number).isRequired,
   maxLength: PropTypes.number.isRequired,
+};
+
+FormTemplate.propTypes = {
+  formFields: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
 export default AutomateSimulationForm;

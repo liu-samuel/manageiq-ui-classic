@@ -349,10 +349,12 @@ Methods updated/added: %{method_stats}") % stat_options)
     copy_params_if_present(@resolve[:new], params, %i[instance_name other_name object_message object_request target_class target_id])
 
     ApplicationController::AE_MAX_RESOLUTION_FIELDS.times do |i|
-      f = ("attribute_" + (i + 1).to_s)
-      v = ("value_" + (i + 1).to_s)
-      @resolve[:new][:attrs][i][0] = params[f] if params[f.to_sym]
-      @resolve[:new][:attrs][i][1] = params[v] if params[v.to_sym]
+      ApplicationController::AE_MAX_RESOLUTION_FIELDS.times do |i|
+        f = ("attribute_" + (i + 1).to_s)
+        v = ("value_" + (i + 1).to_s)
+        @resolve[:new][:attrs][i][0] = params[f.to_sym] || nil
+        @resolve[:new][:attrs][i][1] = params[v.to_sym] || nil
+      end
     end
     @resolve[:new][:target_id] = nil if params[:target_class] == ""
     copy_params_if_present(@resolve, params, %i[button_text button_number])
@@ -365,7 +367,9 @@ Methods updated/added: %{method_stats}") % stat_options)
       targets = Rbac.filtered(params[:target_class]).select(:id, *columns_for_klass(params[:target_class])) if params[:target_class].present?
       unless targets.nil?
         @resolve[:targets] = targets.sort_by { |t| t.name.downcase }.collect { |t| [t.name, t.id.to_s] }
-        @resolve[:new][:target_id] = nil
+        if !@resolve[:target_id]
+          @resolve[:target_id] = nil
+        end
       end
     end
 
@@ -485,6 +489,8 @@ Methods updated/added: %{method_stats}") % stat_options)
       @resolve[:new][:attrs][i][0] = params[f] if params[f.to_sym]
       @resolve[:new][:attrs][i][1] = params[v] if params[v.to_sym]
     end
+    require 'byebug'
+    byebug
     if params.key?(:target_class)
       targets = Rbac.filtered(params[:target_class]).select(:id, *columns_for_klass(params[:target_class])) if params[:target_class].present?
       unless targets.nil?

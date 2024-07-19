@@ -6,7 +6,43 @@
     .automate-simulation-form-wrapper {
         border-right: 0.5px solid lightgray;
         width: 500px;
-        padding: 15px;
+        padding: 25px;
+
+        .automate-object-details, .automate-object-message, 
+        .automate-object-request, .automate-object-attribute, 
+        .automate-selection-target, .automate-readonly,
+        .automate-simulation-parameters {
+            margin-bottom: 5%;
+        }
+
+        .subform {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 5%;
+        }
+    
+        .custom-button-wrapper {
+            display: flex;
+            width: 100%;
+            margin-top: 5%;
+            padding-bottom: 20%;
+            margin-left: 8%
+        }
+        .bx--btn--primary {
+            margin-right: 8%;
+            width: 40%;
+        }
+        .bx--btn--secondary {
+            width: 40%;
+        }
+
+        .attributeValuePairLabel {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10%;
+        }
     }
 
     .automate-simulation-summary-wrapper {
@@ -14,38 +50,12 @@
         flex-direction: column;
         flex-grow: 1;
         padding: 15px;
+        padding-bottom: 10%;
 
         .simulation-title-text {
             font-size: x-large;
             font-weight: lighter;
         }
-
-        .automate-simulation-summary {
-            height: 30%;
-        }
-    }
-
-    .attributeValuePairLabel {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-top: 1%;
-    }
-
-    .subform {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 5%;
-    }
-
-    .bx--btn-set {
-        width: 50%;
-        padding-bottom: 30%;
-        margin-left: 8%
-    }
-    .bx--btn--primary {
-        margin-right: 10%;
     }
 
     .summary-spinner {

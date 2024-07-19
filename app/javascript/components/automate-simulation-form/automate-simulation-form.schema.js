@@ -17,13 +17,23 @@ const loadTargets = (selectedTargetClass) => http.get(targetsURL(selectedTargetC
 
 const createSchema = (
   resolve, maxNameLength, url, aeAnsibleCustomButton, formAction, aeCustomButton,
-  attrValuesPairs, maxLength, typeClassesOptions, formData, setFormData
+  attrValuesPairs, maxLength, typeClassesOptions, formData, setFormData,
 ) => {
   const fields = [
+    {
+      component: componentTypes.PLAIN_TEXT,
+      id: 'object_details',
+      name: 'object_details',
+      className: 'automate-object-details',
+      label: __('Object Details'),
+      style: { fontSize: '16px' },
+    },
+
     {
       component: componentTypes.SELECT,
       id: 'instance_name',
       name: 'instance_name',
+      className: 'automate-instance-name',
       label: __('System/Process'),
       initialValue: resolve.instance_names.sort((b, a) => a.toLowerCase().localeCompare(b.toLowerCase())),
       validate: [{ type: validatorTypes.REQUIRED }],
@@ -36,6 +46,7 @@ const createSchema = (
       component: componentTypes.TEXT_FIELD,
       id: 'object_message',
       name: 'object_message',
+      className: 'automate-object-message',
       label: __('Message'),
       maxLength: maxNameLength,
       initialValue: resolve.new.object_message,
@@ -46,15 +57,16 @@ const createSchema = (
       component: componentTypes.TEXT_FIELD,
       id: 'object_request',
       name: 'object_request',
+      className: 'automate-object-request',
       label: __('Request'),
       initialValue: resolve.new.object_request,
-      validate: [{ type: validatorTypes.REQUIRED }],
     },
 
     {
       component: componentTypes.PLAIN_TEXT,
       id: 'object_attribute',
       name: 'object_attribute',
+      className: 'automate-object-attribute',
       label: __('Object Attribute'),
       style: { fontSize: '16px' },
     },
@@ -65,9 +77,15 @@ const createSchema = (
       name: 'target_class',
       label: __('Type'),
       options: typeClassesOptions,
+      initialValue: resolve.new.target_class,
+      className: 'automate-target-class',
       isSearchable: true,
       simpleValue: true,
-      onChange: (targetClass) => setFormData({ ...formData, targetClass }),
+      onChange: (targetClass) => {
+        if (formData.targetClass !== targetClass) {
+          setFormData((prevData) => ({ ...prevData, targetClass }));
+        }
+      },
       validate: [
         {
           type: validatorTypes.REQUIRED,
@@ -95,6 +113,8 @@ const createSchema = (
       name: 'selection_target',
       label: __('Selection'),
       key: `selection_target_${formData.targetClass}`,
+      className: 'automate-selection-target',
+      initialValue: resolve.new.target_id,
       loadOptions: () => (loadTargets(formData.targetClass)),
       condition: {
         not: {
@@ -134,6 +154,7 @@ const createSchema = (
       id: 'simulationParameters',
       component: componentTypes.PLAIN_TEXT,
       name: 'simulationParameters',
+      className: 'automate-simulation-parameters',
       label: __('Simulation Parameters'),
       style: { fontSize: '16px' },
     },
@@ -141,8 +162,9 @@ const createSchema = (
       component: componentTypes.CHECKBOX,
       id: 'readonly',
       name: 'readonly',
+      className: 'automate-readonly',
       label: __('Execute Methods'),
-      initialValue: resolve.new.readonly !== true,
+      initialValue: resolve.new.readonly,
       title: 'Simulation parameters',
     },
     {
@@ -184,6 +206,7 @@ const createSchema = (
             name: f,
             maxLength,
             label: ' ',
+            initialValue: resolve.new.attrs[i][0],
             fieldprops: {
               className: 'field-input',
               'data-miq_observe': JSON.stringify({ interval: '.5', url }),
@@ -195,6 +218,7 @@ const createSchema = (
             name: v,
             maxLength,
             label: ' ',
+            initialValue: resolve.new.attrs[i][1],
             fieldprops: {
               className: 'value-input',
               'data-miq_observe': JSON.stringify({ interval: '.5', url }),

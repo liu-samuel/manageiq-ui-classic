@@ -2000,6 +2000,7 @@ Rails.application.routes.draw do
         import_export
         log
         get_form_targets
+        prepopulate_simulation_form
         resolve
         resolve_automate_simulation
         review_import
