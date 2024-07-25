@@ -127,16 +127,30 @@ module OpsController::OpsRbac
       @_params[:id] = obj[0]
     end
     @hide_bottom_bar = true
-    require 'byebug'
-    byebug
 
     role = MiqUserRole.find_by(id: params[:id])
     render :json => {
-      :name                         => role.name,
-      :vms                          => role[:settings][:restrictions][:vms],
-      :service_templates            => role[:settings][:restrictions][:service_templates],
-      :features                     => role.miq_product_features
+      :name              => role.name,
+      :vms               => role[:settings][:restrictions][:vms],
+      :service_templates => role[:settings][:restrictions][:service_templates],
+      :features          => role.miq_product_features,
     }
+  end
+
+  def role_features
+    assert_privileges("rbac_role_edit")
+    unless params[:id]
+      obj = find_checked_items
+      @_params[:id] = obj[0]
+    end
+    @hide_bottom_bar = true
+
+    role = MiqUserRole.find_by(id: params[:id])
+    if role
+      render :json => {
+        :features => role.miq_product_features,
+      }
+    end
   end
 
   def rbac_tenant_add
@@ -1330,8 +1344,6 @@ module OpsController::OpsRbac
     @edit[:new][:vm_restriction] = vmr || :none
     str = @record.settings.fetch_path(:restrictions, :service_templates) if @record.settings
     @edit[:new][:service_template_restriction] = str || :none
-    require 'byebug'
-    byebug
     @edit[:new][:features] = rbac_expand_features(@record.miq_product_features.map(&:identifier)).sort
 
     @edit[:current] = copy_hash(@edit[:new])
@@ -1395,8 +1407,6 @@ module OpsController::OpsRbac
   end
 
   def rbac_role_get_form_vars
-    require 'byebug'
-    byebug
     @edit[:new][:name] = params[:name] if params[:name]
     @edit[:new][:vm_restriction] = params[:vm_restriction].to_sym if params[:vm_restriction]
     @edit[:new][:service_template_restriction] = params[:service_template_restriction].to_sym if params[:service_template_restriction]

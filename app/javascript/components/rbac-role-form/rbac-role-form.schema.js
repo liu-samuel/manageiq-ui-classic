@@ -1,6 +1,6 @@
 import { componentTypes, validatorTypes } from '@@ddf';
 
-const createSchema = (selectOptions, customProps, initialValues) => ({
+const createSchema = (selectOptions, customProps, initialValues, rbacRoleMenu, role) => ({
   fields: [
     {
       component: componentTypes.TEXT_FIELD,
@@ -35,18 +35,26 @@ const createSchema = (selectOptions, customProps, initialValues) => ({
       id: 'tree-view-section',
       name: 'tree-view-section',
       fields: [{
-        component: 'tree-view-redux',
+        component: 'tree-view',
         name: 'tree-dropdown',
         id: customProps.tree_id,
         label: __('Product Features (Editing)'),
-        tree_name: customProps.tree_name,
-        bs_tree: customProps.bs_tree,
-        checkboxes: customProps.checkboxes,
-        select_node: customProps.select_node,
-        hierarchical_check: customProps.hierarchical_check,
+        loadData: JSON.parse(customProps.bs_tree),
       }],
     },
   ],
 });
 
 export default createSchema;
+
+// loadData, lazyLoadData, validateOnMount, helperText, identifier, ...props
+
+// TreeViewField.propTypes = {
+//   loadData: PropTypes.func.isRequired,
+//   lazyLoadData: PropTypes.func,
+//   helperText: PropTypes.string,
+//   isRequired: PropTypes.bool,
+//   label: PropTypes.string.isRequired,
+//   identifier: PropTypes.func,
+//   validateOnMount: PropTypes.bool,
+// };

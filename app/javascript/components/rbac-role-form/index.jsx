@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import MiqFormRenderer from '@@ddf';
+import MiqFormRenderer, { useFieldApi } from '@@ddf';
 import PropTypes from 'prop-types';
 import { Loading } from 'carbon-components-react';
 import createSchema from './rbac-role-form.schema';
 import miqRedirectBack from '../../helpers/miq-redirect-back';
 
 const RbacRoleForm = ({
-  selectOptions, url, getURL, customProps, role,
+  selectOptions, url, getURL, customProps, role, rbacMenuTree,
 }) => {
+  // console.log(customProps.bs_tree);
+  // const { input } = useFieldApi(customProps);
   const [formData, setFormData] = useState({
     isLoading: false,
     params: {},
@@ -40,18 +42,15 @@ const RbacRoleForm = ({
       setFormData({ ...formData, isLoading: false, initialValues });
     }
   }, [formData.isLoading, role]);
-  console.log('role: ', role);
-  console.log('initialvalues: ', formData.initialValues);
 
   const onSubmit = (values) => {
-    console.log(values);
     miqSparkleOn();
 
     const params = {
       name: values.name,
       vm_restriction: values.access_restriction_orchestration,
       service_template_restriction: values.access_restriction_catalog,
-      // check: '0',
+      check: '0',
     };
 
     setFormData({
@@ -70,7 +69,7 @@ const RbacRoleForm = ({
       ) : (
         <div className="dialog-provision-form">
           <MiqFormRenderer
-            schema={createSchema(selectOptions, customProps, formData.initialValues)}
+            schema={createSchema(selectOptions, customProps, formData.initialValues, rbacMenuTree, role)}
             onSubmit={onSubmit}
             canCancel
             canReset

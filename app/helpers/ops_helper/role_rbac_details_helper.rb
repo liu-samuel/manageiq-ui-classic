@@ -1,4 +1,11 @@
 module OpsHelper::RoleRbacDetailsHelper
+  def rbac_role_product_features_public
+    require 'byebug'
+    byebug
+    # cells = row_data(_("Product Features (Read Only)"), {:input => 'component', :component => 'TREE_VIEW_REDUX', :props => rbac_menu_tree.locals_for_render, :name => rbac_menu_tree.name})
+    # cells[:cells][:value][:props]
+    params[:rbac_menu_tree]
+  end
   private
 
   def role_rbac_details(role, rbac_menu_tree)

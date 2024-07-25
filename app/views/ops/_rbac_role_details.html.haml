@@ -12,6 +12,7 @@
     :url           => url,
     :getURL        => get_url,
     :customProps   => custom_props,
-    :role          => @role)
+    :role          => @role,
+    :rbacMenuTree  => @rbac_menu_tree)
 - else
   = role_rbac_details(@role, @rbac_menu_tree)
