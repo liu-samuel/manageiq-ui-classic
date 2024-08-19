@@ -28,6 +28,7 @@ module ApplicationController::ExpressionHtml
   end
 
   def exp_build_string(exp)
+    require 'byebug'
     main_font = calculate_font_color(exp['result'])
 
     if exp['and']
@@ -64,7 +65,7 @@ module ApplicationController::ExpressionHtml
         MiqExpression.to_human(temp_exp)
       end
     end
-
+    byebug
     return exp_string, ActionController::Base.helpers.strip_tags(exp_string)
   end
 

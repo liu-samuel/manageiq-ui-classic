@@ -2,6 +2,8 @@ class TreeBuilderPolicySimulationResults < TreeBuilder
   # exp_build_string method needed
   include ApplicationController::ExpressionHtml
 
+  require 'byebug'
+
   has_kids_for Hash, [:x_get_tree_hash_kids]
 
   def initialize(name, sandbox, build = true, **params)
@@ -37,7 +39,7 @@ class TreeBuilderPolicySimulationResults < TreeBuilder
       {:id         => node[:id],
        :text       => prefixed_title(_('VM'), node[:name]),
        :icon       => 'pficon pficon-virtual-machine',
-       :profiles   => node[:profiles],
+       :profiles   => [{:id=>58, :text=>"<strong>Profile:</strong> Compliance: DMZ Configuration", :icon=>"pficon pficon-error-circle-o", :description=>"test description", :selectable=>false}],
        :selectable => false}
     end
   end

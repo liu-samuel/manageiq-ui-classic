@@ -69,6 +69,8 @@ describe TreeBuilderPolicySimulationResults do
     end
 
     it 'sets condition and action nodes correctly' do
+      require 'byebug'
+      byebug
       vms = @rsop_tree.send(:x_get_tree_roots)
       original_vms = @data[:results].sort_by { |a| a[:name].downcase }
       profiles = @rsop_tree.send(:x_get_tree_hash_kids, vms.first, false)

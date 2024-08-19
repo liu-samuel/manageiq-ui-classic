@@ -31,6 +31,7 @@ class MiqPolicyRsopController < ApplicationController
   end
 
   def rsop
+    require 'byebug'
     assert_privileges('policy_simulation')
     if params[:button] == "submit"
       if params[:task_id]                         # First time thru, kick off the report generate task
