@@ -2,9 +2,13 @@ module OpsController::Settings::CapAndU
   extend ActiveSupport::Concern
 
   def cu_collection_update
+    require 'byebug'
+    byebug
     assert_privileges("region_edit")
 
     return unless load_edit("cu_edit__collection", "replace_cell__explorer")
+
+    cu_collection_get_form_vars
 
     if params[:button] == "save"
       # C & U collection settings
@@ -39,11 +43,6 @@ module OpsController::Settings::CapAndU
       add_flash(_("Capacity and Utilization Collection settings saved"))
       get_node_info(x_node)
       replace_right_cell(:nodetype => @nodetype)
-    elsif params[:button] == "reset"
-      @changed = false
-      add_flash(_("All changes have been reset"), :warning)
-      get_node_info(x_node)
-      replace_right_cell(:nodetype => @nodetype)
     end
   end
 
@@ -58,23 +57,25 @@ module OpsController::Settings::CapAndU
     end
   end
 
-  def cu_collection_field_changed
-    assert_privileges("region_edit")
+  # def cu_collection_field_changed
+  #   require 'byebug'
+  #   byebug
+  #   assert_privileges("region_edit")
 
-    return unless load_edit("cu_edit__collection", "replace_cell__explorer")
+  #   return unless load_edit("cu_edit__collection", "replace_cell__explorer")
 
-    cu_collection_get_form_vars
-    @changed = (@edit[:new] != @edit[:current]) # UI edit form, C&U collection form
-    # C&U tab
-    # need to create an array of items, if their or their children's capture has been changed then make the changed one blue.
-    render :update do |page|
-      page << javascript_prologue
-      page.replace_html(@refresh_div, :partial => @refresh_partial) if @refresh_div
-      page << "$('#clusters_div').#{params[:all_clusters] == 'true' ? "hide" : "show"}()" if params[:all_clusters]
-      page << "$('#storages_div').#{params[:all_storages] == 'true' ? "hide" : "show"}()" if params[:all_storages]
-      page << javascript_for_miq_button_visibility(@changed)
-    end
-  end
+  #   cu_collection_get_form_vars
+  #   @changed = (@edit[:new] != @edit[:current]) # UI edit form, C&U collection form
+  #   # C&U tab
+  #   # need to create an array of items, if their or their children's capture has been changed then make the changed one blue.
+  #   render :update do |page|
+  #     page << javascript_prologue
+  #     page.replace_html(@refresh_div, :partial => @refresh_partial) if @refresh_div
+  #     page << "$('#clusters_div').#{params[:all_clusters] == 'true' ? "hide" : "show"}()" if params[:all_clusters]
+  #     page << "$('#storages_div').#{params[:all_storages] == 'true' ? "hide" : "show"}()" if params[:all_storages]
+  #     page << javascript_for_miq_button_visibility(@changed)
+  #   end
+  # end
 
   private
 
@@ -136,8 +137,10 @@ module OpsController::Settings::CapAndU
   end
 
   def cu_collection_get_form_vars
-    @edit[:new][:all_clusters] = params[:all_clusters] == 'true' if params[:all_clusters]
-    @edit[:new][:all_storages] = params[:all_storages] == 'true' if params[:all_storages]
+    require 'byebug'
+    byebug
+    @edit[:new][:all_clusters] = params[:all_clusters] if !params[:all_clusters].nil?
+    @edit[:new][:all_storages] = params[:all_datastores] if !params[:all_datastores].nil?
 
     if params[:id]
       model, id, _ = TreeBuilder.extract_node_model_and_id(params[:id])
