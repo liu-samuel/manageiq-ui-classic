@@ -137,8 +137,6 @@ module OpsController::Settings::CapAndU
   end
 
   def cu_collection_get_form_vars
-    require 'byebug'
-    byebug
     @edit[:new][:all_clusters] = params[:all_clusters] if !params[:all_clusters].nil?
     @edit[:new][:all_storages] = params[:all_datastores] if !params[:all_datastores].nil?
 

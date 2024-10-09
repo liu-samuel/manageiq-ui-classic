@@ -6,6 +6,8 @@ import {
 import createSchema from './settings-cu-collection-tab.schema.js';
 
 let idCounter = 0;
+let clustersValues = new Set();
+let datastoresValues = new Set();
 
 const SettingsCUCollectionTab = ({
   url, clusterTree, datastoreTree, allClusters, allDatastores,
@@ -33,6 +35,35 @@ const SettingsCUCollectionTab = ({
       );
     }
     return <span>{text}</span>;
+  };
+
+  const checkChildren = (collectionValue, child, collectionSet) => {
+    if (!child.children) {
+      collectionSet.add(child.value);
+    } else {
+      for (let nextChild of child.children) {
+        checkChildren(collectionValue, nextChild, collectionSet);
+      }
+    }
+  };
+
+  // find checked boxes for all role features
+  const findCheck = (treeValue, node, collectionSet) => {
+    const result = node.value.split('#')[0];
+
+    if (result === treeValue) {
+      collectionSet.add(node.value);
+      if (node.children) {
+        for (let child of node.children) {
+          checkChildren(treeValue, child, collectionSet);
+        }
+      }
+    }
+    if (node.children) {
+      for (let child of node.children) {
+        findCheck(treeValue, child, collectionSet);
+      }
+    }
   };
 
   const transformTree = (node) => {
@@ -111,20 +142,21 @@ const SettingsCUCollectionTab = ({
       all_datastores: values.all_datastores,
       button: 'save',
     };
+    console.log("clusters ids: ", values.clusters_tree);
+    console.log("datastores: ", values.datastores_tree);
 
     if (!values.all_clusters) {
-      params.clusters_checked_with_id = values.clusters_tree;
       const clustersTreeDropdown = values.clusters_tree;
       const clustersSplitValues = clustersTreeDropdown.map((string) => string.split('#')[0]);
       params.clusters_checked = clustersSplitValues;
     }
 
     if (!values.all_datastores) {
-      params.datastores_checked_with_id = values.datastores_tree;
       const datastoresTreeDropdown = values.datastores_tree;
       const datastoresSplitValues = datastoresTreeDropdown.map((string) => string.split('#')[0]);
       params.datastores_checked = datastoresSplitValues;
     }
+    console.log("params: ", params);
 
     setData({
       ...data,
