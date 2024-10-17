@@ -173,17 +173,17 @@ const SettingsCUCollectionTab = ({
           }
           if (hostNode === node.nodes[node.nodes.length - 1]) {
             if (curr.length === node.nodes.length) {
-              params.clusters_checked.push({ id: node.key.split('-')[1], capture: true });
+              params.clusters_checked.push({ id: node.key, capture: true });
             } else {
-              params.clusters_checked.push({ id: node.key.split('-')[1], capture: false });
+              params.clusters_checked.push({ id: node.key, capture: false });
             }
           }
         }
       } else {
         if (clustersSplitValues.includes(node.key)) {
-          params.clusters_checked.push({ id: node.key.split('-')[1], capture: true });
+          params.clusters_checked.push({ id: node.key, capture: true });
         } else {
-          params.clusters_checked.push({ id: node.key.split('-')[1], capture: false });
+          params.clusters_checked.push({ id: node.key, capture: false });
         }
       }
     }
@@ -197,17 +197,17 @@ const SettingsCUCollectionTab = ({
           }
           if (hostNode === node.nodes[node.nodes.length - 1]) {
             if (curr.length === node.nodes.length) {
-              params.datastores_checked.push({ id: node.key.split('-')[1], capture: true });
+              params.datastores_checked.push({ id: node.key, capture: true });
             } else {
-              params.datastores_checked.push({ id: node.key.split('-')[1], capture: false });
+              params.datastores_checked.push({ id: node.key, capture: false });
             }
           }
         }
       } else {
         if (datastoresSplitValues.includes(node.key)) {
-          params.datastores_checked.push({ id: node.key.split('-')[1], capture: true });
+          params.datastores_checked.push({ id: node.key, capture: true });
         } else {
-          params.datastores_checked.push({ id: node.key.split('-')[1], capture: false });
+          params.datastores_checked.push({ id: node.key, capture: false });
         }
       }
     }

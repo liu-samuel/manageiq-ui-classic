@@ -145,6 +145,16 @@ module OpsController::Settings::CapAndU
     @edit[:new][:clusters] = params[:clusters_checked] if params[:clusters_checked]
     @edit[:new][:storages] = params[:datastores_checked] if params[:datastores_checked]
 
+
+    @edit[:new][:clusters].each do |cluster|
+      cluster[:hosts].each do |host|
+        if host[:id] == id
+          host[:capture] = capture_value
+        end
+      end
+    end
+
+    
     if params[:id]
       model, id, _ = TreeBuilder.extract_node_model_and_id(params[:id])
 
