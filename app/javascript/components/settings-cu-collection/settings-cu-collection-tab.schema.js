@@ -87,7 +87,7 @@ const createSchema = (
                 'Data is collected for a Cluster and all of its Hosts when at least one Host is selected.'
               ),
             },
-            ...(!clustersTree != null && !clustersTree.present
+            ...(clustersTree != null
               ? []
               : [{
                 component: componentTypes.PLAIN_TEXT,
@@ -154,7 +154,7 @@ const createSchema = (
               condition: { and: [{ when: 'all_datastores', is: false }] },
               label: __('Enable Collection by Datastore'),
             },
-            ...(!datastoresTree != null && !datastoresTree.present
+            ...(datastoresTree != null
               ? []
               : [{
                 component: componentTypes.PLAIN_TEXT,

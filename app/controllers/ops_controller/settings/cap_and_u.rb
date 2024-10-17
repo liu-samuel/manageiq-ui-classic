@@ -47,10 +47,13 @@ module OpsController::Settings::CapAndU
   end
 
   def set_perf_collection_for_clusters
+    require 'byebug'
+    byebug
     cluster_ids = @edit[:new][:clusters].collect { |c| c[:id] }.uniq
     clusters = EmsCluster.where(:id => cluster_ids).includes(:hosts)
 
     clusters.each do |cl|
+      # byebug
       enabled_hosts = @edit[:new][cl.id].select { |h| h[:capture] }
       enabled_host_ids = enabled_hosts.collect { |h| h[:id] }.uniq
       cl.perf_capture_enabled_host_ids = enabled_host_ids
@@ -137,8 +140,10 @@ module OpsController::Settings::CapAndU
   end
 
   def cu_collection_get_form_vars
-    @edit[:new][:all_clusters] = params[:all_clusters] if !params[:all_clusters].nil?
-    @edit[:new][:all_storages] = params[:all_datastores] if !params[:all_datastores].nil?
+    @edit[:new][:all_clusters] = params[:all_clusters] if params[:all_clusters]
+    @edit[:new][:all_storages] = params[:all_datastores] if params[:all_datastores]
+    @edit[:new][:clusters] = params[:clusters_checked] if params[:clusters_checked]
+    @edit[:new][:storages] = params[:datastores_checked] if params[:datastores_checked]
 
     if params[:id]
       model, id, _ = TreeBuilder.extract_node_model_and_id(params[:id])
@@ -152,6 +157,8 @@ module OpsController::Settings::CapAndU
   end
 
   def cluster_tree_settings(model, id)
+    require 'byebug'
+    byebug
     if id == "NonCluster" # Clicked on all non-clustered hosts
       @edit[:new][:non_cl_hosts].each { |c| c[:capture] = params[:check] == "1" }
     elsif model == "EmsCluster" # Clicked on a cluster

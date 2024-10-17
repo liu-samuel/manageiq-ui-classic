@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 import React, { useState, useEffect } from 'react';
 import MiqFormRenderer, { useFormApi } from '@@ddf';
 import {
@@ -6,8 +7,8 @@ import {
 import createSchema from './settings-cu-collection-tab.schema.js';
 
 let idCounter = 0;
-let clustersValues = new Set();
-let datastoresValues = new Set();
+const clustersValues = new Set();
+const datastoresValues = new Set();
 
 const SettingsCUCollectionTab = ({
   url, clusterTree, datastoreTree, allClusters, allDatastores,
@@ -41,7 +42,7 @@ const SettingsCUCollectionTab = ({
     if (!child.children) {
       collectionSet.add(child.value);
     } else {
-      for (let nextChild of child.children) {
+      for (const nextChild of child.children) {
         checkChildren(collectionValue, nextChild, collectionSet);
       }
     }
@@ -54,24 +55,27 @@ const SettingsCUCollectionTab = ({
     if (result === treeValue) {
       collectionSet.add(node.value);
       if (node.children) {
-        for (let child of node.children) {
+        for (const child of node.children) {
           checkChildren(treeValue, child, collectionSet);
         }
       }
     }
     if (node.children) {
-      for (let child of node.children) {
+      for (const child of node.children) {
         findCheck(treeValue, child, collectionSet);
       }
     }
   };
 
-  const transformTree = (node) => {
+  const transformTree = (node, isDatastore, depth) => {
     const currentId = generateId();
 
     const nodeObject = {
       value: `${node.key}#${currentId}`,
-      label: parseLabel(node.text),
+      label: <span className="dropdown-label">
+        {parseLabel(node.text)}
+      </span>,
+      showCheckbox: !isDatastore || node.nodes !== undefined || depth === 0,
     };
 
     let icon;
@@ -95,8 +99,9 @@ const SettingsCUCollectionTab = ({
     }
 
     if (node.nodes) {
-      nodeObject.children = node.nodes.map(transformTree);
+      nodeObject.children = node.nodes.map((node) => transformTree(node, isDatastore, depth + 1));
     }
+
     return nodeObject;
   };
 
@@ -118,11 +123,11 @@ const SettingsCUCollectionTab = ({
     let datastoresNodes = [];
     if (clusterTree) {
       const clustersBsTree = JSON.parse(clusterTree.bs_tree);
-      clustersNodes = clustersBsTree.map(transformTree);
+      clustersNodes = clustersBsTree.map((node) => transformTree(node, false, 0));
     }
     if (datastoreTree) {
       const datastoresBsTree = JSON.parse(datastoreTree.bs_tree);
-      datastoresNodes = datastoresBsTree.map(transformTree);
+      datastoresNodes = datastoresBsTree.map((node) => transformTree(node, true, 0));
     }
     setData({
       ...data,
@@ -132,7 +137,7 @@ const SettingsCUCollectionTab = ({
   }, []);
 
   const handleSubmit = (values) => {
-    console.log("values: ", values);
+    console.log('values: ', values);
     if (!values.tree_dropdown) {
       values.tree_dropdown = data.checked;
     }
@@ -141,22 +146,73 @@ const SettingsCUCollectionTab = ({
       all_clusters: values.all_clusters,
       all_datastores: values.all_datastores,
       button: 'save',
+      clusters_checked: [],
+      datastores_checked: [],
     };
-    console.log("clusters ids: ", values.clusters_tree);
-    console.log("datastores: ", values.datastores_tree);
+    console.log('datastores: ', values.datastores_tree);
+
+    let clustersSplitValues = [];
+    let datastoresSplitValues = [];
 
     if (!values.all_clusters) {
       const clustersTreeDropdown = values.clusters_tree;
-      const clustersSplitValues = clustersTreeDropdown.map((string) => string.split('#')[0]);
-      params.clusters_checked = clustersSplitValues;
+      clustersSplitValues = clustersTreeDropdown.map((string) => string.split('#')[0]);
     }
 
     if (!values.all_datastores) {
       const datastoresTreeDropdown = values.datastores_tree;
-      const datastoresSplitValues = datastoresTreeDropdown.map((string) => string.split('#')[0]);
-      params.datastores_checked = datastoresSplitValues;
+      datastoresSplitValues = datastoresTreeDropdown.map((string) => string.split('#')[0]);
     }
-    console.log("params: ", params);
+
+    for (const node of clusterTree.tree_nodes) {
+      const curr = [];
+      if (node.nodes) {
+        for (const hostNode of node.nodes) {
+          if (clustersSplitValues.includes(hostNode.key)) {
+            curr.push(hostNode.key);
+          }
+          if (hostNode === node.nodes[node.nodes.length - 1]) {
+            if (curr.length === node.nodes.length) {
+              params.clusters_checked.push({ id: node.key.split('-')[1], capture: true });
+            } else {
+              params.clusters_checked.push({ id: node.key.split('-')[1], capture: false });
+            }
+          }
+        }
+      } else {
+        if (clustersSplitValues.includes(node.key)) {
+          params.clusters_checked.push({ id: node.key.split('-')[1], capture: true });
+        } else {
+          params.clusters_checked.push({ id: node.key.split('-')[1], capture: false });
+        }
+      }
+    }
+
+    for (const node of datastoreTree.tree_nodes) {
+      const curr = [];
+      if (node.nodes) {
+        for (const hostNode of node.nodes) {
+          if (datastoresSplitValues.includes(hostNode.key)) {
+            curr.push(hostNode.key);
+          }
+          if (hostNode === node.nodes[node.nodes.length - 1]) {
+            if (curr.length === node.nodes.length) {
+              params.datastores_checked.push({ id: node.key.split('-')[1], capture: true });
+            } else {
+              params.datastores_checked.push({ id: node.key.split('-')[1], capture: false });
+            }
+          }
+        }
+      } else {
+        if (datastoresSplitValues.includes(node.key)) {
+          params.datastores_checked.push({ id: node.key.split('-')[1], capture: true });
+        } else {
+          params.datastores_checked.push({ id: node.key.split('-')[1], capture: false });
+        }
+      }
+    }
+
+    console.log('params: ', params);
 
     setData({
       ...data,
