@@ -3,12 +3,12 @@ module OpsController::Settings::CapAndU
 
   def cu_collection_update
     require 'byebug'
-    byebug
     assert_privileges("region_edit")
 
     return unless load_edit("cu_edit__collection", "replace_cell__explorer")
 
     cu_collection_get_form_vars
+    byebug
 
     if params[:button] == "save"
       # C & U collection settings
@@ -147,42 +147,38 @@ module OpsController::Settings::CapAndU
 
 
     @edit[:new][:clusters].each do |cluster|
-      cluster[:hosts].each do |host|
-        if host[:id] == id
-          host[:capture] = capture_value
-        end
-      end
+      require 'byebug'
+      byebug
+      model, id, _ = TreeBuilder.extract_node_model_and_id(cluster[:id])
+      cluster_tree_settings(model, id, cluster)
     end
-
-    
-    if params[:id]
-      model, id, _ = TreeBuilder.extract_node_model_and_id(params[:id])
-
-      if model == 'Storage'
-        @edit[:new][:storages][id.to_i][:capture] = params[:check] == "1"
-      else
-        cluster_tree_settings(model, id)
-      end
+    require 'byebug'
+    byebug
+    @edit[:new][:storages].each do |storage|
+      model, id, _ = TreeBuilder.extract_node_model_and_id(storage[:id])
+      @edit[:new][:storages][id.to_i][:capture] = storage[:capture]
     end
   end
 
-  def cluster_tree_settings(model, id)
+  def cluster_tree_settings(model, id, cluster_or_host)
     require 'byebug'
     byebug
     if id == "NonCluster" # Clicked on all non-clustered hosts
-      @edit[:new][:non_cl_hosts].each { |c| c[:capture] = params[:check] == "1" }
+      @edit[:new][:non_cl_hosts].each { |c| c[:capture] = cluster_or_host[:capture] }
     elsif model == "EmsCluster" # Clicked on a cluster
-      @edit[:new][id.to_i].each { |h| h[:capture] = params[:check] == "1" }
+      @edit[:new][id.to_i].each { |h| h[:capture] = cluster_or_host[:capture] }
     elsif model == "Host" # Clicked on a host
       nc_host = @edit[:new][:non_cl_hosts].find { |x| x[:id] == id.to_i }
       # The host is among the non-clustered ones
-      return nc_host[:capture] = params[:check] == "1" if nc_host
+      return nc_host[:capture] = cluster_or_host[:capture] if nc_host
 
       # The host is under a cluster, find it and change it
       @edit[:new][:clusters].find do |cl|
-        @edit[:new][cl[:id]].find do |h|
+        byebug
+        @edit[:new][cl[:id].split("-")[1].to_i].find do |h|
+          byebug
           found = h[:id] == id.to_i
-          h[:capture] = params[:check] == "1" if found
+          h[:capture] = cluster_or_host[:capture] if found
           found
         end
       end

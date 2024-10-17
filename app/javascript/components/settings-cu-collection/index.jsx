@@ -170,10 +170,17 @@ const SettingsCUCollectionTab = ({
         for (const hostNode of node.nodes) {
           if (clustersSplitValues.includes(hostNode.key)) {
             curr.push(hostNode.key);
+            params.clusters_checked.push({ id: hostNode.key, capture: true });
           }
           if (hostNode === node.nodes[node.nodes.length - 1]) {
             if (curr.length === node.nodes.length) {
               params.clusters_checked.push({ id: node.key, capture: true });
+              for (const val of curr) {
+                const index = params.clusters_checked.findIndex((host) => host.id === val);
+                if (index > -1) {
+                  params.clusters_checked.splice(index, 1);
+                }
+              }
             } else {
               params.clusters_checked.push({ id: node.key, capture: false });
             }
