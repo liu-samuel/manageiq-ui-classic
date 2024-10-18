@@ -1,7 +1,7 @@
 import { componentTypes } from '@@ddf';
 
 const createSchema = (
-  clustersTree, datastoresTree, clustersNodes, datastoresNodes, allClusters, allDatastores,
+  clustersTree, datastoresTree, clustersNodes, datastoresNodes, hostsChecked, datastoresChecked, allClusters, allDatastores,
 ) => {
   const fields = [
     {
@@ -72,6 +72,7 @@ const createSchema = (
               key: `${clustersNodes.length}`,
               className: 'clusters-tree',
               nodes: clustersNodes,
+              checked: hostsChecked,
               condition: { and: [{ when: 'all_clusters', is: false }] },
               label: __('Enable Collection by Cluster'),
             },
@@ -151,6 +152,7 @@ const createSchema = (
               className: 'datastores-tree',
               key: `${datastoresNodes.length}`,
               nodes: datastoresNodes,
+              checked: datastoresChecked,
               condition: { and: [{ when: 'all_datastores', is: false }] },
               label: __('Enable Collection by Datastore'),
             },

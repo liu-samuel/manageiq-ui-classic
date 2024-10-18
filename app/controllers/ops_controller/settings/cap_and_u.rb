@@ -48,7 +48,7 @@ module OpsController::Settings::CapAndU
 
   def set_perf_collection_for_clusters
     require 'byebug'
-    byebug
+    # byebug
     cluster_ids = @edit[:new][:clusters].collect { |c| c[:id] }.uniq
     clusters = EmsCluster.where(:id => cluster_ids).includes(:hosts)
 
@@ -60,25 +60,88 @@ module OpsController::Settings::CapAndU
     end
   end
 
-  # def cu_collection_field_changed
-  #   require 'byebug'
-  #   byebug
-  #   assert_privileges("region_edit")
+  def cu_collection_fetch
+    @edit = {}
+    @edit[:new] = {}
+    @edit[:current] = {}
+    @edit[:key] = "cu_edit__collection"
+    @edit[:current][:all_clusters] = Metric::Targets.perf_capture_always[:host_and_cluster]
+    @edit[:current][:all_storages] = Metric::Targets.perf_capture_always[:storage]
+    @edit[:current][:clusters] = []
+    @cl_hash = EmsCluster.get_perf_collection_object_list
+    @cl_hash.each_with_index do |h, j|
+      _cid, cl_hash = h
+      c = cl_hash[:cl_rec]
+      enabled = cl_hash[:ho_enabled]
+      enabled_host_ids = enabled.collect(&:id)
+      hosts = (cl_hash[:ho_enabled] + cl_hash[:ho_disabled]).sort_by { |ho| ho.name.downcase }
+      cl_enabled = enabled_host_ids.length == hosts.length
+      en_flg = cl_enabled && !enabled.empty?
+      @edit[:current][:clusters].push(:id => c.id, :capture => en_flg)
+      @edit[:current][c.id] = []
+      hosts.each do |host|
+        host_capture = enabled_host_ids.include?(host.id.to_i)
+        @edit[:current][c.id].push(:id => host.id, :capture => host_capture)
+      end
+      flg = true
+      count = 0
+      @edit[:current][c.id].each do |host|
+        unless host[:capture]
+          count += 1 # checking if all hosts are unchecked then cluster capture will be false else undefined
+          flg = count == @edit[:current][c.id].length ? false : "undefined"
+        end
+        @edit[:current][:clusters][j][:capture] = flg
+      end
+    end
+    @edit[:current][:clusters].sort_by! { |c| c[:name] }
 
-  #   return unless load_edit("cu_edit__collection", "replace_cell__explorer")
+    # ##################### Adding Non-Clustered hosts node
+    @edit[:current][:non_cl_hosts] ||= []
+    ExtManagementSystem.in_my_region.each do |e|
+      all = e.non_clustered_hosts
+      all.each do |h|
+        @edit[:current][:non_cl_hosts] << {:id => h.id, :capture => h.perf_capture_enabled?}
+      end
+    end
+    if @edit[:current][:clusters].present?
+      @cluster_tree = TreeBuilderClusters.new(:cluster_tree, @sb, true, :root => @cl_hash)
+    end
+    @edit[:current][:storages] = {}
+    Storage.in_my_region.includes(:taggings, :tags, :hosts).select(:id, :name, :location).sort_by { |s| s.name.downcase }.each do |s|
+      @edit[:current][:storages][s.id] = {:id => s.id, :capture => s.perf_capture_enabled?}
+    end
+    if @edit[:current][:storages].present?
+      @datastore_tree = TreeBuilderDatastores.new(:datastore_tree, @sb, true, :root => @edit[:current][:storages])
+    end
+    @edit[:new] = copy_hash(@edit[:current])
 
-  #   cu_collection_get_form_vars
-  #   @changed = (@edit[:new] != @edit[:current]) # UI edit form, C&U collection form
-  #   # C&U tab
-  #   # need to create an array of items, if their or their children's capture has been changed then make the changed one blue.
-  #   render :update do |page|
-  #     page << javascript_prologue
-  #     page.replace_html(@refresh_div, :partial => @refresh_partial) if @refresh_div
-  #     page << "$('#clusters_div').#{params[:all_clusters] == 'true' ? "hide" : "show"}()" if params[:all_clusters]
-  #     page << "$('#storages_div').#{params[:all_storages] == 'true' ? "hide" : "show"}()" if params[:all_storages]
-  #     page << javascript_for_miq_button_visibility(@changed)
-  #   end
-  # end
+    clusters = []
+    @edit[:current].each do |key, value|
+      if key.is_a?(Numeric) && value != []
+        clusters << value
+      elsif key.is_a?(Numeric) && value == []
+        clusters << key
+      end
+    end
+    require 'byebug'
+    byebug
+    hosts = []
+    clusters.each do |cluster|
+      if !cluster.is_a?(Numeric) && !cluster.empty?
+        cluster.each do |host|
+          hosts << host
+        end
+      else
+        hosts << cluster
+      end
+      
+    end
+    
+    render :json => {
+      :hosts      => hosts,
+      :datastores => @edit[:current][:storages].to_a
+    }
+  end
 
   private
 
@@ -142,21 +205,18 @@ module OpsController::Settings::CapAndU
   def cu_collection_get_form_vars
     @edit[:new][:all_clusters] = params[:all_clusters] if params[:all_clusters]
     @edit[:new][:all_storages] = params[:all_datastores] if params[:all_datastores]
-    @edit[:new][:clusters] = params[:clusters_checked] if params[:clusters_checked]
-    @edit[:new][:storages] = params[:datastores_checked] if params[:datastores_checked]
 
-
-    @edit[:new][:clusters].each do |cluster|
-      require 'byebug'
-      byebug
+    params[:clusters_checked].each do |cluster|
       model, id, _ = TreeBuilder.extract_node_model_and_id(cluster[:id])
       cluster_tree_settings(model, id, cluster)
     end
-    require 'byebug'
-    byebug
-    @edit[:new][:storages].each do |storage|
+    params[:datastores_checked].each do |storage|
       model, id, _ = TreeBuilder.extract_node_model_and_id(storage[:id])
       @edit[:new][:storages][id.to_i][:capture] = storage[:capture]
+    end
+    params[:hosts_checked].each do |host|
+      model, id, _ = TreeBuilder.extract_node_model_and_id(host[:id])
+      cluster_tree_settings(model, id, host)
     end
   end
 
@@ -171,12 +231,9 @@ module OpsController::Settings::CapAndU
       nc_host = @edit[:new][:non_cl_hosts].find { |x| x[:id] == id.to_i }
       # The host is among the non-clustered ones
       return nc_host[:capture] = cluster_or_host[:capture] if nc_host
-
       # The host is under a cluster, find it and change it
       @edit[:new][:clusters].find do |cl|
-        byebug
-        @edit[:new][cl[:id].split("-")[1].to_i].find do |h|
-          byebug
+        @edit[:new][cl[:id]].find do |h|
           found = h[:id] == id.to_i
           h[:capture] = cluster_or_host[:capture] if found
           found

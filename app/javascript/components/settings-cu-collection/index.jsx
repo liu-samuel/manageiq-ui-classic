@@ -5,21 +5,21 @@ import {
   Db2Database20, BareMetalServer20,
 } from '@carbon/icons-react';
 import createSchema from './settings-cu-collection-tab.schema.js';
+import miqRedirectBack from '../../helpers/miq-redirect-back.js';
 
 let idCounter = 0;
-const clustersValues = new Set();
-const datastoresValues = new Set();
+let hostsOrDatastoresIds = new Set();
 
 const SettingsCUCollectionTab = ({
-  url, clusterTree, datastoreTree, allClusters, allDatastores,
+  url, fetchURL, clusterTree, datastoreTree, allClusters, allDatastores,
 }) => {
   const [data, setData] = useState({
     isLoading: false,
     tempData: undefined,
     clustersNodes: [],
     datastoresNodes: [],
-    clustersChecked: [],
-    datastoresChecked: [],
+    hostsCheckedWithId: [],
+    datastoresCheckedWithId: [],
   });
 
   const generateId = () => idCounter++;
@@ -36,35 +36,6 @@ const SettingsCUCollectionTab = ({
       );
     }
     return <span>{text}</span>;
-  };
-
-  const checkChildren = (collectionValue, child, collectionSet) => {
-    if (!child.children) {
-      collectionSet.add(child.value);
-    } else {
-      for (const nextChild of child.children) {
-        checkChildren(collectionValue, nextChild, collectionSet);
-      }
-    }
-  };
-
-  // find checked boxes for all role features
-  const findCheck = (treeValue, node, collectionSet) => {
-    const result = node.value.split('#')[0];
-
-    if (result === treeValue) {
-      collectionSet.add(node.value);
-      if (node.children) {
-        for (const child of node.children) {
-          checkChildren(treeValue, child, collectionSet);
-        }
-      }
-    }
-    if (node.children) {
-      for (const child of node.children) {
-        findCheck(treeValue, child, collectionSet);
-      }
-    }
   };
 
   const transformTree = (node, isDatastore, depth) => {
@@ -101,7 +72,6 @@ const SettingsCUCollectionTab = ({
     if (node.nodes) {
       nodeObject.children = node.nodes.map((node) => transformTree(node, isDatastore, depth + 1));
     }
-
     return nodeObject;
   };
 
@@ -129,10 +99,49 @@ const SettingsCUCollectionTab = ({
       const datastoresBsTree = JSON.parse(datastoreTree.bs_tree);
       datastoresNodes = datastoresBsTree.map((node) => transformTree(node, true, 0));
     }
-    setData({
-      ...data,
-      clustersNodes,
-      datastoresNodes,
+
+    http.get(fetchURL).then((result) => {
+      console.log('result: ', result);
+      const { hosts, datastores } = result;
+      const hostsChecked = [];
+      const hostsCheckedWithId = [];
+      const datastoresChecked = [];
+      const datastoresCheckedWithId = [];
+      for (const host of hosts) {
+        if (host.capture === true) {
+          hostsChecked.push(`h-${host.id}`);
+        }
+      }
+      for (const datastore of datastores) {
+        if (datastore.capture === true) {
+          datastoresChecked.push(`ds-${datastore.id}`);
+        }
+      }
+
+      for (const node of clustersNodes) {
+        if (node.children) {
+          for (const host of node.children) {
+            if (hostsChecked.includes(host.value.split('#')[0])) {
+              hostsCheckedWithId.push(host.value);
+            }
+          }
+        }
+      }
+
+      for (const node of datastoresNodes) {
+        if (datastoresChecked.includes(node.value.split('#')[0])) {
+          datastoresCheckedWithId.push(node.value);
+        }
+      }
+      console.log("hostschecked: ", hostsCheckedWithId);
+      console.log("datastoresChecked: ", datastoresCheckedWithId);
+      setData({
+        ...data,
+        clustersNodes,
+        datastoresNodes,
+        hostsCheckedWithId,
+        datastoresCheckedWithId,
+      });
     });
   }, []);
 
@@ -148,8 +157,8 @@ const SettingsCUCollectionTab = ({
       button: 'save',
       clusters_checked: [],
       datastores_checked: [],
+      hosts_checked: [],
     };
-    console.log('datastores: ', values.datastores_tree);
 
     let clustersSplitValues = [];
     let datastoresSplitValues = [];
@@ -170,15 +179,15 @@ const SettingsCUCollectionTab = ({
         for (const hostNode of node.nodes) {
           if (clustersSplitValues.includes(hostNode.key)) {
             curr.push(hostNode.key);
-            params.clusters_checked.push({ id: hostNode.key, capture: true });
+            params.hosts_checked.push({ id: hostNode.key, capture: true });
           }
           if (hostNode === node.nodes[node.nodes.length - 1]) {
             if (curr.length === node.nodes.length) {
               params.clusters_checked.push({ id: node.key, capture: true });
               for (const val of curr) {
-                const index = params.clusters_checked.findIndex((host) => host.id === val);
+                const index = params.hosts_checked.findIndex((host) => host.id === val);
                 if (index > -1) {
-                  params.clusters_checked.splice(index, 1);
+                  params.hosts_checked.splice(index, 1);
                 }
               }
             } else {
@@ -232,7 +241,7 @@ const SettingsCUCollectionTab = ({
     <MiqFormRenderer
       className="toggle"
       schema={createSchema(
-        clusterTree, datastoreTree, data.clustersNodes, data.datastoresNodes, allClusters, allDatastores,
+        clusterTree, datastoreTree, data.clustersNodes, data.datastoresNodes, data.hostsCheckedWithId, data.datastoresCheckedWithId, allClusters, allDatastores,
       )}
       onSubmit={handleSubmit}
       canSubmit

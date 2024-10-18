@@ -1,7 +1,9 @@
 - url = "/ops/cu_collection_update"
+- get_url = "/ops/cu_collection_fetch"
 - require 'byebug'
 = react('SettingsCUCollectionTab', 
   :url           => url,
+  :fetchURL        => get_url,
   :clusterTree   => @cluster_tree,
   :datastoreTree => @datastore_tree,
   :allClusters   => Metric::Targets.perf_capture_always[:host_and_cluster],
