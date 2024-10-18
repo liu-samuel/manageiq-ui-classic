@@ -83,6 +83,7 @@ const SettingsCUCollectionTab = ({
             ...data,
             isLoading: false,
           });
+          window.location.reload();
         })
         .catch((error) => console.log('error: ', error));
     }
@@ -101,7 +102,6 @@ const SettingsCUCollectionTab = ({
     }
 
     http.get(fetchURL).then((result) => {
-      console.log('result: ', result);
       const { hosts, datastores } = result;
       const hostsChecked = [];
       const hostsCheckedWithId = [];
@@ -129,12 +129,18 @@ const SettingsCUCollectionTab = ({
       }
 
       for (const node of datastoresNodes) {
-        if (datastoresChecked.includes(node.value.split('#')[0])) {
-          datastoresCheckedWithId.push(node.value);
+        if (node.children) {
+          if (datastoresChecked.includes(node.value.split('#')[0])) {
+            for (const host of node.children) {
+              datastoresCheckedWithId.push(host.value);
+            }
+          }
+        } else {
+          if (datastoresChecked.includes(node.value.split('#')[0])) {
+            datastoresCheckedWithId.push(node.value);
+          }
         }
       }
-      console.log("hostschecked: ", hostsCheckedWithId);
-      console.log("datastoresChecked: ", datastoresCheckedWithId);
       setData({
         ...data,
         clustersNodes,
@@ -146,7 +152,6 @@ const SettingsCUCollectionTab = ({
   }, []);
 
   const handleSubmit = (values) => {
-    console.log('values: ', values);
     if (!values.tree_dropdown) {
       values.tree_dropdown = data.checked;
     }
@@ -227,8 +232,6 @@ const SettingsCUCollectionTab = ({
         }
       }
     }
-
-    console.log('params: ', params);
 
     setData({
       ...data,

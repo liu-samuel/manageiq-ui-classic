@@ -27,8 +27,6 @@ const CheckboxTreeComponent = (props) => {
     tree: nodes,
   });
 
-  console.log(treeState.tree, treeState.checked);
-
   useEffect(() => {
     input.onChange(treeState.checked);
   }, [treeState.checked]);

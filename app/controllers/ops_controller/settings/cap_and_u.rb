@@ -2,14 +2,13 @@ module OpsController::Settings::CapAndU
   extend ActiveSupport::Concern
 
   def cu_collection_update
-    require 'byebug'
     assert_privileges("region_edit")
 
     return unless load_edit("cu_edit__collection", "replace_cell__explorer")
 
     cu_collection_get_form_vars
-    byebug
-
+    # require 'byebug'
+    # byebug
     if params[:button] == "save"
       # C & U collection settings
       if @edit[:new][:all_clusters] != @edit[:current][:all_clusters]
@@ -47,13 +46,10 @@ module OpsController::Settings::CapAndU
   end
 
   def set_perf_collection_for_clusters
-    require 'byebug'
-    # byebug
     cluster_ids = @edit[:new][:clusters].collect { |c| c[:id] }.uniq
     clusters = EmsCluster.where(:id => cluster_ids).includes(:hosts)
 
     clusters.each do |cl|
-      # byebug
       enabled_hosts = @edit[:new][cl.id].select { |h| h[:capture] }
       enabled_host_ids = enabled_hosts.collect { |h| h[:id] }.uniq
       cl.perf_capture_enabled_host_ids = enabled_host_ids
@@ -123,8 +119,6 @@ module OpsController::Settings::CapAndU
         clusters << key
       end
     end
-    require 'byebug'
-    byebug
     hosts = []
     clusters.each do |cluster|
       if !cluster.is_a?(Numeric) && !cluster.empty?
@@ -134,12 +128,11 @@ module OpsController::Settings::CapAndU
       else
         hosts << cluster
       end
-      
     end
-    
+
     render :json => {
       :hosts      => hosts,
-      :datastores => @edit[:current][:storages].to_a
+      :datastores => @edit[:current][:storages].values
     }
   end
 
@@ -203,8 +196,8 @@ module OpsController::Settings::CapAndU
   end
 
   def cu_collection_get_form_vars
-    @edit[:new][:all_clusters] = params[:all_clusters] if params[:all_clusters]
-    @edit[:new][:all_storages] = params[:all_datastores] if params[:all_datastores]
+    @edit[:new][:all_clusters] = params[:all_clusters]
+    @edit[:new][:all_storages] = params[:all_datastores]
 
     params[:clusters_checked].each do |cluster|
       model, id, _ = TreeBuilder.extract_node_model_and_id(cluster[:id])
@@ -221,8 +214,6 @@ module OpsController::Settings::CapAndU
   end
 
   def cluster_tree_settings(model, id, cluster_or_host)
-    require 'byebug'
-    byebug
     if id == "NonCluster" # Clicked on all non-clustered hosts
       @edit[:new][:non_cl_hosts].each { |c| c[:capture] = cluster_or_host[:capture] }
     elsif model == "EmsCluster" # Clicked on a cluster
